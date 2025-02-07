@@ -12,8 +12,11 @@ class MultilingualCLIP(transformers.PreTrainedModel):
         self.LinearTransformation = torch.nn.Linear(in_features=config.transformerDimensions,
                                                     out_features=config.numDims)
 
-    def forward(self, txt, tokenizer):
-        txt_tok = tokenizer(txt, padding=True, return_tensors='pt')
+    def forward(self, txt, tokenizer, device=None):
+        if device is None:  # Maybe tokenizer doesn't support .to()
+            txt_tok = tokenizer(txt, padding=True, return_tensors='pt')
+        else:
+            txt_tok = tokenizer(txt, padding=True, return_tensors='pt').to(device)
         embs = self.transformer(**txt_tok)[0]
         att = txt_tok['attention_mask']
         embs = (embs * att.unsqueeze(2)).sum(dim=1) / att.sum(dim=1)[:, None]
